@@ -4,8 +4,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { fetchEvent, deleteEvent } from "../../util/http.js";
 import Header from "../Header.jsx";
 import ErrorBlock from "../UI/ErrorBlock.jsx";
+import Modal from "../UI/Modal.jsx";
+import { useState } from "react";
 
 export default function EventDetails() {
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const params = useParams();
   const id = params.id;
   const navigate = useNavigate();
@@ -33,6 +37,14 @@ export default function EventDetails() {
 
   const onDeleteHandler = () => {
     mutate({ id });
+  };
+
+  const onStartDeleteHandler = () => {
+    setIsDeleting(true);
+  };
+
+  const onStopDeleteHandler = () => {
+    setIsDeleting(false);
   };
 
   let content;
@@ -67,7 +79,7 @@ export default function EventDetails() {
           <nav>
             <button
               type="button"
-              onClick={onDeleteHandler}
+              onClick={onStartDeleteHandler}
               disabled={isPendingDelete}
             >
               Delete
@@ -93,6 +105,37 @@ export default function EventDetails() {
 
   return (
     <>
+      {isDeleting && (
+        <Modal onClose={onStopDeleteHandler}>
+          <h2>Are you sure?</h2>
+          <p>
+            Do you really want to delete this event? This action cannot be
+            undone.
+          </p>
+          <div className="form-actions">
+            {isPendingDelete && <p>Deleting... Please wait...</p>}
+            {!isPendingDelete && (
+              <>
+                <button onClick={onStopDeleteHandler} className="button-text">
+                  Cancel
+                </button>
+                <button onClick={onDeleteHandler} className="button">
+                  Delete
+                </button>
+              </>
+            )}
+          </div>
+          {isErrorDelete && (
+            <ErrorBlock
+              title={"An error occured"}
+              message={
+                error.info?.message ||
+                "Error deleting event. Please try again later"
+              }
+            />
+          )}
+        </Modal>
+      )}
       <Outlet />
       <Header>
         <Link to="/events" className="nav-item">
